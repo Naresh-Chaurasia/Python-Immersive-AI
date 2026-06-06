@@ -1,0 +1,40 @@
+= Company Knowledge Assistant (CKA)
+
+A RAG-powered internal knowledge assistant that lets employees ask natural language questions about company policies, guides, FAQs, and announcements.
+
+== Architecture
+
+* **FastAPI** - Backend API server
+* **PostgreSQL + pgvector** - Vector store for document embeddings
+* **Redis** - Cache layer for faster responses
+* **LangChain + OpenAI** - Embeddings and LLM
+* **Cohere** - Re-ranking for improved results
+
+== Getting Started
+
+. Clone the repo and navigate to the project directory.
+. Create a `.env` file with your API keys (OpenAI, LangSmith, Cohere).
+. Start all services:
+
+[source,bash]
+----
+docker compose up --build
+----
+
+. Access the web UI at http://localhost:8000
+
+== Features
+
+* **Document Ingestion** - Upload PDFs, DOCX, Markdown, and TXT files
+* **Semantic Search** - Find relevant documents using vector similarity
+* **Q&A Assistant** - Ask questions in natural language, get answers grounded in your data
+* **Re-ranking** - Cohere re-ranking improves answer relevance
+* **RAG Evaluation** - Built-in evaluation using RAGAS metrics
+
+== Project Structure
+
+* `app/` - Application code (API, ingestion, RAG pipeline)
+* `data/` - Company documents (announcements, FAQs, guides, policies, handbooks)
+* `seed/` - Test Q&A data for evaluation
+* `init-db/` - Database initialization scripts
+* `docker-compose.yml` - Orchestrates all services
