@@ -3,6 +3,13 @@ from sentence_transformers import SentenceTransformer
 import os
 from dotenv import load_dotenv
 
+"""
+2_creating_vector_db.py:
+Demonstrates how to store sentence embeddings in a managed vector database (Pinecone) and perform semantic search over them.  
+Covers full flow: text → embeddings → cloud index → similarity query with ranked results and metadata.
+
+"""
+
 load_dotenv()
 
 try:

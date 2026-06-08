@@ -4,14 +4,18 @@ from annoy import AnnoyIndex
 from sentence_transformers import SentenceTransformer
 import time
 
-#This function creates a FAISS index using the L2 (Euclidean) distance, adds the embeddings to the index, and performs a k-nearest neighbor search for the query vector.
+"""
+3_vector_db_faiss_annoy.py
+Compares FAISS (exact search) and Annoy (approximate search) by performing semantic similarity search on embeddings and measuring performance.  
+Highlights trade-off between accuracy (FAISS) and speed/scalability (Annoy) using real query results and timing.
+"""
+
 def faiss_search(embeddings, query_vector, k):
     index = faiss.IndexFlatL2(embeddings.shape[1])
     index.add(embeddings)
     distances, indices = index.search(np.array([query_vector]), k)
     return distances[0], indices[0]
 
-#This function creates an Annoy index using angular (cosine) distance, adds embeddings to the index, builds the index with 10 trees, and performs a k-nearest neighbor search.
 def annoy_search(embeddings, query_vector, k):
     dimension = embeddings.shape[1]
     index = AnnoyIndex(dimension, 'angular')
@@ -48,8 +52,8 @@ try:
     dimension = embeddings.shape[1]
     print(f"Vector dimension: {dimension}")
 
-    # Get user input for query
-    query_text = input("Enter your query: ")
+    # Example query
+    query_text = "Nature is Beautiful"
     query_vector = model.encode([query_text])[0]
     print(f"Encoded query: '{query_text}'")
 
@@ -62,7 +66,6 @@ try:
         print(f"Rank: {i+1}")
         print(f"Text: {texts[idx]}")
         print(f"Distance: {distance}")
-        print(f"Score: {1 / (1 + distance):.4f}")  # Convert distance to a similarity score
         print()
     print(f"FAISS search time: {faiss_time:.6f} seconds")
 
@@ -75,7 +78,6 @@ try:
         print(f"Rank: {i+1}")
         print(f"Text: {texts[idx]}")
         print(f"Distance: {distance}")
-        print(f"Score: {1 / (1 + distance):.4f}")  # Convert distance to a similarity score
         print()
     print(f"Annoy search time: {annoy_time:.6f} seconds")
 

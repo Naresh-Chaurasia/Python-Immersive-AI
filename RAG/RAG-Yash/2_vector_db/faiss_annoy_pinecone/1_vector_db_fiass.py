@@ -2,7 +2,14 @@ import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
 
+
+
 """
+
+1_vector_db_fiass.py:
+Demonstrates how to generate sentence embeddings and use FAISS for efficient similarity search over text data.  
+Shows end‑to‑end flow: text → embeddings → vector index → nearest neighbour retrieval based on semantic similarity.
+
 
 **Flow of the Code**
 
