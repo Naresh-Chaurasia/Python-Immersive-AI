@@ -1,0 +1,10 @@
+@startuml
+
+class Command{
+    + graph: str | None
+    + update: Any | None
+    + resume: dict[str, Any] | Any | None
+    + goto: Send | Sequence[Send | N] | N
+}
+
+@enduml

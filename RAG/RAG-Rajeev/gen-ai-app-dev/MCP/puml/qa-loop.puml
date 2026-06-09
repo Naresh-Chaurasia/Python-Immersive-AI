@@ -1,0 +1,40 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam ActivityBackgroundColor #F5F5F5
+skinparam ActivityBorderColor #333
+skinparam ActivityFontColor #333
+
+' title query_loop() Activity Flow
+
+start
+:Initialize MCP Client : MCPStdioClient;
+:Connect to Server : client.connect_to_server();
+:Get Tools List : client.get_tools();
+note right: Creates tools_info string
+
+repeat
+  :1. Get User Query;
+  if (Query == "exit"?") then (yes)
+    stop
+  else (no)
+    :2. Create Tool Selection Prompt;
+    :3. Call LLM (Tool Selection);
+    :Parse LLM Response;
+    
+    if (4. Tool Available?) then (yes)
+      :Call Selected Tool;
+    else (no)
+      :Use LLM Response Directly;
+    endif
+    
+    :5. Create Response Prompt;
+    :6. Call LLM (Generate Final Response);
+    :Display Result;
+  endif
+repeat while (User continues?) is (No)
+->yes;
+:Close Connections;
+stop
+
+@enduml

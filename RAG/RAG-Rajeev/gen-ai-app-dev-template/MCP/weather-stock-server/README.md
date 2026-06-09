@@ -1,0 +1,1 @@
+## Placeholder folder for MCP related exercises
