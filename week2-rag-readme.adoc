@@ -1,0 +1,475 @@
+= CatalogueIQ — Step-by-Step Setup Guide
+:author: ShopSmart India RAG Capstone
+:doctype: article
+:toc: right
+:toclevels: 3
+:sectnums:
+:source-highlighter: highlight.js
+
+== Prerequisites
+
+Before you begin, ensure the following are installed on your machine:
+
+[cols="1,2,2", options="header"]
+|===
+| Tool | Minimum Version | Check Command
+
+| Python
+| 3.10+
+| `python --version`
+
+| pip
+| 23+
+| `pip --version`
+
+| Git (optional)
+| Any
+| `git --version`
+
+| Jupyter
+| Installed via requirements_rag.txt
+| `jupyter --version`
+|===
+
+You will also need:
+
+* An **Anthropic API key** — get one at https://console.anthropic.com
+* ~2 GB of free disk space (for model weights and the FAISS index)
+* Internet access for the first run (to download the SentenceTransformer model)
+
+---
+
+== Step 1 — Create the Project Folder
+
+Open a terminal and create a clean working directory.
+
+[source,bash]
+----
+mkdir CatalogueIQ
+cd CatalogueIQ
+----
+
+Move all downloaded files into this folder. Your directory should look like this:
+
+[source]
+----
+CatalogueIQ/
+├── NB-01_embeddings.ipynb
+├── NB-02_ragas_setup.ipynb
+├── NB-03_ingestion_chunking.ipynb
+├── NB-04_vector_database.ipynb
+├── NB-05_rag_chain.ipynb
+├── NB-06_query_expansion.ipynb
+├── NB-07_memory_multiturn.ipynb
+├── NB-08_complete_solution.ipynb
+├── catalogueiq_final.py
+├── data_README.md
+└── requirements_rag.txt
+----
+
+---
+
+== Step 2 — Create the Data and Output Folders
+
+The notebooks expect a specific folder structure that is not included in the
+download. Create it with one command:
+
+[source,bash]
+----
+mkdir data\index
+mkdir output
+----
+
+Then rename the downloaded README into the data folder:
+
+[source,bash]
+----
+# macOS / Linux
+mv data_README.md data/README.md
+
+# Windows (Command Prompt)
+move data_README.md data\README.md
+----
+
+Your structure should now be:
+
+[source]
+----
+CatalogueIQ/
+├── data/
+│   ├── index/        ← populated automatically by NB-04
+│   └── README.md     ← your data reference guide
+├── output/           ← populated automatically as notebooks run
+├── NB-01_embeddings.ipynb
+│   ...
+├── catalogueiq_final.py
+└── requirements_rag.txt
+----
+
+---
+
+== Step 3 — Create a Virtual Environment
+
+It is strongly recommended to isolate this project's dependencies.
+
+[source,bash]
+----
+# Create the virtual environment
+python -m venv .venv_rag
+
+# Activate it — macOS / Linux
+source .venv_rag/bin/activate
+
+# Activate it — Windows (Command Prompt)
+.venv_rag\Scripts\activate.bat
+
+# Activate it — Windows (PowerShell)
+.venv_rag\Scripts\Activate.ps1
+----
+
+You should see `(.venv_rag)` appear at the start of your terminal prompt.
+
+---
+
+== Step 4 — Install Dependencies
+
+[source,bash]
+----
+
+# When you run pip install -r requirements.When you run pip install -r requirements.txt, pip itself is the tool doing the installing. If pip is outdated, it can mishandle newer package metadata formats, fail to resolve dependencies correctly, or miss security fixes. Upgrading pip first ensures you're using the latest resolver before it tries to install anything else — it takes 2 seconds and prevents a whole class of confusing installation errors down the line.
+
+pip install --upgrade pip
+python.exe -m pip install --upgrade pip
+pip install -r requirements_rag.txt
+----
+
+NOTE: This installs PyTorch (CPU), SentenceTransformers, FAISS, LangChain,
+RAGAS, and all other dependencies. Expect it to take **5–10 minutes** on a
+fresh environment and download ~1.5 GB.
+
+To verify the key packages installed correctly:
+
+[source,bash]
+----
+python -c "import anthropic, langchain, faiss, sentence_transformers, ragas; print('All packages OK')"
+----
+
+---
+
+== Step 5 — Add Your Anthropic API Key
+
+Create a `.env` file in the project root. The notebooks load the key from
+this file automatically — never hardcode it.
+
+[source,bash]
+----
+# macOS / Linux
+echo "ANTHROPIC_API_KEY=your-key-here" > .env
+
+# Windows (Command Prompt)
+echo ANTHROPIC_API_KEY=your-key-here > .env
+----
+
+Replace `your-key-here` with your actual key from
+https://console.anthropic.com/settings/keys.
+
+CAUTION: Add `.env` to your `.gitignore` if you are using Git.
+Never commit your API key to a repository.
+
+[source,bash]
+----
+echo ".env" >> .gitignore
+----
+
+---
+
+== Step 6 — Create the Knowledge Base Data Files
+
+The notebooks need ShopSmart India data files in the `data/` folder.
+Open `data/README.md` — it contains the required columns and 3-row samples
+for every file.
+
+=== Option A — Generate with Claude (Recommended, ~10 minutes)
+
+For each file, paste this prompt into Claude at claude.ai, replacing the
+placeholders with the column definitions from `data/README.md`:
+
+[source]
+----
+Generate a realistic ShopSmart India <filename> with <N> rows.
+Use these columns: <paste columns from data/README.md>.
+Use Indian product names, brands, and ₹ pricing.
+Return only the CSV/Markdown/HTML content, no explanation.
+----
+
+Repeat for each file below:
+
+[cols="2,1,2", options="header"]
+|===
+| File | Format | Minimum Size
+
+| `data/products.csv`
+| CSV
+| 200 rows across 5 categories
+
+| `data/category_taxonomy.md`
+| Markdown
+| 5 top-level categories documented
+
+| `data/returns_policy.md`
+| Markdown
+| All 7 policy sections present
+
+| `data/seller_onboarding.md`
+| Markdown
+| All 5 guide sections present
+
+| `data/buyer_faq.html`
+| HTML
+| 50 FAQ items across 5 sections
+
+| `data/review_summaries.csv`
+| CSV
+| 50 rows (10 products × 5 themes)
+|===
+
+=== Option B — Minimum Viable Start
+
+If you want to run the notebooks immediately with minimal data, you only
+need these three files to cover all five query types:
+
+[source,bash]
+----
+data/products.csv          # required for all product queries
+data/returns_policy.md     # required for policy & multi-hop queries
+data/buyer_faq.html        # required for FAQ and payment queries
+----
+
+The notebooks will print warnings for any missing files and skip them gracefully.
+
+---
+
+== Step 7 — Launch Jupyter and Run the Notebooks
+
+=== Start Jupyter
+
+[source,bash]
+----
+jupyter notebook
+----
+
+This opens a browser tab at `http://localhost:8888`. Navigate to your
+`CatalogueIQ` folder and open the notebooks in order.
+
+=== Recommended Run Order
+
+[cols="1,2,3", options="header"]
+|===
+| Order | Notebook | What it Produces
+
+| 1
+| `NB-01_embeddings.ipynb`
+| `output/nb01_pca_embeddings.png`, `output/nb01_synonym_heatmap.png`
+
+| 2
+| `NB-02_ragas_setup.ipynb`
+| `output/golden_test_set.json` ← *required by NB-08*
+
+| 3
+| `NB-03_ingestion_chunking.ipynb`
+| `output/all_chunks.json` ← *required by NB-04*
+
+| 4
+| `NB-04_vector_database.ipynb`
+| `data/index/faiss.index` ← *required by NB-05 through NB-08*
+
+| 5
+| `NB-05_rag_chain.ipynb`
+| `output/nb05_chain_results.json`
+
+| 6
+| `NB-06_query_expansion.ipynb`
+| Improved retrieval results printed inline
+
+| 7
+| `NB-07_memory_multiturn.ipynb`
+| `output/nb07_conversation_log.json`
+
+| 8
+| `NB-08_complete_solution.ipynb`
+| `output/ragas_results.json` ← *final evaluation report*
+|===
+
+TIP: Run each notebook top-to-bottom using *Kernel → Restart & Run All*
+before moving to the next one. This ensures all output files are written
+cleanly.
+
+=== API Cost Estimate per Notebook
+
+[cols="2,1,3", options="header"]
+|===
+| Notebook | Approx. Cost | Notes
+
+| NB-01 Embeddings
+| $0.00
+| No API calls — local model only
+
+| NB-02 RAGAS Setup
+| ~$0.02
+| 3-question dummy RAGAS run
+
+| NB-03 Ingestion & Chunking
+| $0.00
+| No API calls
+
+| NB-04 Vector DB
+| $0.00
+| No API calls
+
+| NB-05 RAG Chain
+| ~$0.05
+| 6 Claude generation calls
+
+| NB-06 Query Expansion
+| ~$0.05
+| 5 Claude expansion + generation calls
+
+| NB-07 Memory Multi-Turn
+| ~$0.10
+| 10 Claude calls (2 per conversation turn)
+
+| NB-08 Complete Solution
+| ~$0.50
+| ~130 calls: generation + full RAGAS evaluation
+
+| *Total*
+| *~$0.72*
+| Estimate; varies with response length
+|===
+
+---
+
+== Step 8 — Run the CLI Application
+
+Once NB-04 has been run (FAISS index exists), you can use the final CLI app.
+
+=== Interactive Shopper Mode (default)
+
+[source,bash]
+----
+python catalogueiq_final.py
+----
+
+=== Seller Persona
+
+[source,bash]
+----
+python catalogueiq_final.py --persona seller
+----
+
+=== Support Agent Persona
+
+[source,bash]
+----
+python catalogueiq_final.py --persona support
+----
+
+=== Run Full RAGAS Evaluation
+
+[source,bash]
+----
+python catalogueiq_final.py --evaluate
+----
+
+Results are saved to `output/ragas_results.json`.
+
+=== Force Rebuild the Index
+
+Use this after adding new data files or changing chunking strategy:
+
+[source,bash]
+----
+python catalogueiq_final.py --rebuild
+----
+
+=== Combine Flags
+
+[source,bash]
+----
+python catalogueiq_final.py --rebuild --evaluate
+----
+
+---
+
+== Step 9 — Verify Everything is Working
+
+Run this checklist to confirm your setup is complete before the demo:
+
+[source,bash]
+----
+# 1. Check all output files exist
+ls output/golden_test_set.json
+ls output/all_chunks.json
+ls data/index/faiss.index
+ls output/ragas_results.json
+
+# 2. Run a quick interactive query
+python catalogueiq_final.py
+# Type: "What is the battery life of the boAt Airdopes 141?"
+# Expected: a grounded answer with a citation like
+#   [Source: products.csv, Product ID: ELEC-001]
+----
+
+---
+
+== Troubleshooting
+
+[cols="2,3", options="header"]
+|===
+| Problem | Fix
+
+| `ANTHROPIC_API_KEY not found`
+| Check that `.env` is in the project root (same folder as the notebooks),
+  not inside `data/`. Re-run `echo "ANTHROPIC_API_KEY=..." > .env`.
+
+| `FileNotFoundError: data/index/faiss.index`
+| Run NB-04 first. The index is built by that notebook, not included in
+  the download.
+
+| `FileNotFoundError: output/golden_test_set.json`
+| Run NB-02 first. NB-08 depends on the golden test set created there.
+
+| `FileNotFoundError: output/all_chunks.json`
+| Run NB-03 first. NB-04 loads chunks from that file.
+
+| `ModuleNotFoundError: No module named 'faiss'`
+| Your virtual environment may not be active. Run `source .venv_rag/bin/activate`
+  and then `pip install -r requirements_rag.txt` again.
+
+| RAGAS evaluation is very slow
+| This is normal — RAGAS makes ~120 LLM API calls for 10 questions.
+  Expect 3–7 minutes. Do not interrupt the cell.
+
+| `JSONDecodeError` in NB-06 query expansion
+| Claude occasionally wraps JSON in markdown fences despite instructions.
+  The code strips them automatically; if it fails, re-run the cell once.
+
+| Low RAGAS scores on first run
+| Expected. Comparative recommendation and multi-hop queries score lowest
+  at baseline. NB-08 implements the targeted improvement (top_k 3→6)
+  to raise those scores.
+|===
+
+---
+
+== Quick Reference — File Dependencies
+
+[source]
+----
+NB-01  (no dependencies)
+  └─► output/nb01_pca_embeddings.png
+
+NB-02  (no dependencies)
+  └─► output/golden_test_set.json
+           │
+           └──────────────────────────────► NB-08

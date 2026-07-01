@@ -1,0 +1,50 @@
+# CatalogueIQ — RAG-Powered Product Intelligence Assistant
+# Week 2 Capstone — ShopSmart India
+# Pin major versions for reproducibility
+
+# ── Anthropic & LangChain ─────────────────────────────────────
+anthropic>=0.28.0,<1.0.0
+langchain>=0.2.0,<0.3.0
+langchain-anthropic>=0.1.15,<0.2.0
+langchain-community>=0.2.0,<0.3.0
+
+# ── Embeddings ────────────────────────────────────────────────
+sentence-transformers>=3.0.0,<4.0.0
+
+# ── Cross-Encoder Re-Ranking ──────────────────────────────────
+# cross-encoders is a thin wrapper; the model is loaded via sentence-transformers
+# cross-encoders>=0.1.0   # install if separate package needed
+# In practice, cross-encoder models are loaded directly via sentence_transformers.CrossEncoder
+
+# ── Vector Store ─────────────────────────────────────────────
+faiss-cpu>=1.8.0,<2.0.0
+
+# ── RAGAS Evaluation ─────────────────────────────────────────
+ragas>=0.1.9,<0.2.0
+datasets>=2.20.0,<3.0.0          # required by ragas
+
+# ── Data & Utilities ─────────────────────────────────────────
+pandas>=2.2.0,<3.0.0
+numpy>=1.26.0,<2.0.0
+pydantic>=2.7.0,<3.0.0
+python-dotenv>=1.0.0,<2.0.0
+
+# ── Web / HTML Parsing ────────────────────────────────────────
+beautifulsoup4>=4.12.0,<5.0.0
+lxml>=5.2.0,<6.0.0
+
+# ── Visualisation ────────────────────────────────────────────
+matplotlib>=3.9.0,<4.0.0
+scikit-learn>=1.5.0,<2.0.0       # PCA for embeddings viz
+
+# ── Jupyter ───────────────────────────────────────────────────
+jupyter>=1.0.0,<2.0.0
+ipykernel>=6.29.0,<7.0.0
+ipywidgets>=8.1.0,<9.0.0         # progress bars in notebooks
+
+# ── Optional UI (Stretch Goal) ────────────────────────────────
+# gradio>=4.36.0,<5.0.0
+# streamlit>=1.36.0,<2.0.0
+
+# ── HTTP ─────────────────────────────────────────────────────
+httpx>=0.27.0,<1.0.0
